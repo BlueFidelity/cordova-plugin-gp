@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="cordova-plugin-gp"
+        version="1.1.1">
+
+    <name>Google Plus</name>
+    <description>Google Plus Cordova Plugin</description>
+    <license>MIT</license>
+
+    <repo>https://github.com/BlueFidelity/cordova-plugin-gp</repo>
+    <issue>https://github.com/BlueFidelity/cordova-plugin-gp/issues</issue>
+
+    <keywords>cordova,google,signin,login,oauth,identity,authentication,android</keywords>
+
+    <engines>
+        <engine name="cordova" version=">=3.5.0" />
+    </engines>
+
+    <!-- android -->
+    <platform name="android">
+
+        <framework src="com.google.android.gms:play-services-auth:+" />
+        <framework src="com.google.android.gms:play-services-identity:+" />
+
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="GooglePlus">
+                <param name="android-package" value="com.bluefidelity.cordova.plugins.GooglePlus" />
+                <param name="onload" value="true" />
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+            <uses-permission android:name="android.permission.USE_CREDENTIALS" />
+        </config-file>
+
+        <js-module src="www/android/GooglePlus.js" name="GooglePlus">
+            <clobbers target="window.plugins.googleplus" />
+        </js-module>
+
+        <source-file src="src/android/GooglePlus.java" target-dir="src/com/bluefidelity/cordova/plugins" />
+
+    </platform>
+
+</plugin>

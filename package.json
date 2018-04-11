@@ -1,0 +1,29 @@
+{
+  "name": "cordova-plugin-gp",
+  "version": "1.1.1",
+  "description": "Google Plus Cordova Plugin",
+  "homepage": "https://www.bluefidelity.com/",
+  "cordova": {
+    "id": "cordova-plugin-gp",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/BlueFidelity/cordova-plugin-gp.git"
+  },
+  "keywords": [
+    "cordova",
+    "google",
+    "signin",
+    "login",
+    "oauth",
+    "identity",
+    "authentication",
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Blue Fidelity Inc. (https://www.bluefidelity.com/)",
+  "license": "MIT"
+}
