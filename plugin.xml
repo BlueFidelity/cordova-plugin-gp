@@ -3,7 +3,7 @@
 <plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="cordova-plugin-gp"
-        version="1.1.2">
+        version="2.1.3">
 
     <name>Google Plus</name>
     <description>Google Plus Cordova Plugin</description>
@@ -36,7 +36,7 @@
         </config-file>
 
         <js-module src="www/android/GooglePlus.js" name="GooglePlus">
-            <clobbers target="window.plugins.googleplus" />
+            <clobbers target="GooglePlus" />
         </js-module>
 
         <source-file src="src/android/GooglePlus.java" target-dir="src/com/bluefidelity/cordova/plugins" />

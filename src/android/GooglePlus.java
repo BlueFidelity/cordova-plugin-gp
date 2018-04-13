@@ -48,8 +48,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
     public static final String ACTION_LOGIN = "login";
     public static final String ACTION_TRY_SILENT_LOGIN = "trySilentLogin";
     public static final String ACTION_LOGOUT = "logout";
-    public static final String ACTION_DISCONNECT = "disconnect";
-    public static final String ACTION_GET_SIGNING_CERTIFICATE_FINGERPRINT = "getSigningCertificateFingerprint";
 
     private final static String FIELD_ACCESS_TOKEN      = "accessToken";
     private final static String FIELD_TOKEN_EXPIRES     = "expires";
@@ -102,13 +100,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
         } else if (ACTION_LOGOUT.equals(action)) {
             Log.i(TAG, "Trying to logout!");
             signOut();
-
-        } else if (ACTION_DISCONNECT.equals(action)) {
-            Log.i(TAG, "Trying to disconnect the user");
-            disconnect();
-
-        } else if (ACTION_GET_SIGNING_CERTIFICATE_FINGERPRINT.equals(action)) {
-            getSigningCertificateFingerprint();
 
         } else {
             Log.i(TAG, "This action doesn't exist");
@@ -237,33 +228,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
     }
 
     /**
-     * Disconnects the user and revokes access
-     */
-    private void disconnect() {
-        if (this.mGoogleApiClient == null) {
-            savedCallbackContext.error("Please use login or trySilentLogin before disconnecting");
-            return;
-        }
-
-        ConnectionResult apiConnect = mGoogleApiClient.blockingConnect();
-
-        if (apiConnect.isSuccess()) {
-            Auth.GoogleSignInApi.revokeAccess(this.mGoogleApiClient).setResultCallback(
-                    new ResultCallback<Status>() {
-                        @Override
-                        public void onResult(Status status) {
-                            if (status.isSuccess()) {
-                                savedCallbackContext.success("Disconnected user");
-                            } else {
-                                savedCallbackContext.error(status.getStatusCode());
-                            }
-                        }
-                    }
-            );
-        }
-    }
-
-    /**
      * Handles failure in connecting to google apis.
      *
      * @param result is the ConnectionResult to potentially catch
@@ -363,38 +327,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
                     return null;
                 }
             }.execute();
-        }
-    }
-
-    private void getSigningCertificateFingerprint() {
-        String packageName = webView.getContext().getPackageName();
-        int flags = PackageManager.GET_SIGNATURES;
-        PackageManager pm = webView.getContext().getPackageManager();
-        try {
-            PackageInfo packageInfo = pm.getPackageInfo(packageName, flags);
-            Signature[] signatures = packageInfo.signatures;
-            byte[] cert = signatures[0].toByteArray();
-
-            String strResult = "";
-            MessageDigest md;
-            md = MessageDigest.getInstance("SHA1");
-            md.update(cert);
-            for (byte b : md.digest()) {
-                String strAppend = Integer.toString(b & 0xff, 16);
-                if (strAppend.length() == 1) {
-                    strResult += "0";
-                }
-                strResult += strAppend;
-                strResult += ":";
-            }
-            // strip the last ':'
-            strResult = strResult.substring(0, strResult.length()-1);
-            strResult = strResult.toUpperCase();
-            this.savedCallbackContext.success(strResult);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            savedCallbackContext.error(e.getMessage());
         }
     }
 
