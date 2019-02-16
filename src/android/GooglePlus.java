@@ -129,9 +129,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
         // Make our SignIn Options builder.
         GoogleSignInOptions.Builder gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN);
 
-        // request the default scopes
-        gso.requestEmail().requestProfile();
-
         // We're building the scopes on the Options object instead of the API Client
         // b/c of what was said under the "addScope" method here:
         // https://developers.google.com/android/reference/com/google/android/gms/common/api/GoogleApiClient.Builder.html#public-methods
@@ -149,7 +146,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
 
         // if webClientId included, we'll request an idToken
         if (webClientId != null && !webClientId.isEmpty()) {
-            gso.requestIdToken(webClientId);
 
             // if webClientId is included AND offline is true, we'll request the serverAuthCode
             if (clientOptions.optBoolean(ARGUMENT_OFFLINE_KEY, false)) {
@@ -306,20 +302,7 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
                     GoogleSignInAccount acct = signInResult.getSignInAccount();
                     JSONObject result = new JSONObject();
                     try {
-                        JSONObject accessTokenBundle = getAuthToken(
-                            cordova.getActivity(), acct.getAccount(), true
-                        );
-                        result.put(FIELD_ACCESS_TOKEN, accessTokenBundle.get(FIELD_ACCESS_TOKEN));
-                        result.put(FIELD_TOKEN_EXPIRES, accessTokenBundle.get(FIELD_TOKEN_EXPIRES));
-                        result.put(FIELD_TOKEN_EXPIRES_IN, accessTokenBundle.get(FIELD_TOKEN_EXPIRES_IN));
-                        result.put("email", acct.getEmail());
-                        result.put("idToken", acct.getIdToken());
                         result.put("serverAuthCode", acct.getServerAuthCode());
-                        result.put("userId", acct.getId());
-                        result.put("displayName", acct.getDisplayName());
-                        result.put("familyName", acct.getFamilyName());
-                        result.put("givenName", acct.getGivenName());
-                        result.put("imageUrl", acct.getPhotoUrl());
                         savedCallbackContext.success(result);
                     } catch (Exception e) {
                         savedCallbackContext.error("Trouble obtaining result, error: " + e.getMessage());
