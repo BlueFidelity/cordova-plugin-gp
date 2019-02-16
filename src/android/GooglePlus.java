@@ -40,7 +40,7 @@ import android.content.pm.Signature;
 
 /**
  * Originally written by Eddy Verbruggen (http://github.com/EddyVerbruggen/cordova-plugin-googleplus)
- * Forked/Duplicated and Modified by PointSource, LLC, 2016.
+ * Forked/Duplicated and Modified by Bluefidelity Inc.
  */
 public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConnectionFailedListener {
 
@@ -61,7 +61,7 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
     public static final String ARGUMENT_HOSTED_DOMAIN = "hostedDomain";
 
     public static final String TAG = "GooglePlugin";
-    public static final int RC_GOOGLEPLUS = 77552; // Request Code to identify our plugin's activities
+    public static final int RC_GOOGLEPLUS = 1552; // Request Code to identify our plugin's activities
     public static final int KAssumeStaleTokenSec = 60;
 
     // Wraps our service connection to Google Play services and provides access to the users sign in state and Google APIs
