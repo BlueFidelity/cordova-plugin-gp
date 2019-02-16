@@ -1,16 +1,7 @@
 package com.bluefidelity.cordova.plugins;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerFuture;
-import android.accounts.AuthenticatorException;
-import android.accounts.OperationCanceledException;
-import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.auth.api.Auth;
@@ -24,19 +15,8 @@ import com.google.android.gms.common.api.Status;
 import com.google.android.gms.common.api.Scope;
 
 import org.apache.cordova.*;
-import org.apache.cordova.engine.SystemWebChromeClient;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.security.MessageDigest;
-import android.content.pm.Signature;
 
 /**
  * Originally written by Eddy Verbruggen (http://github.com/EddyVerbruggen/cordova-plugin-googleplus)
@@ -44,25 +24,16 @@ import android.content.pm.Signature;
  */
 public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConnectionFailedListener {
 
-    public static final String ACTION_IS_AVAILABLE = "isAvailable";
     public static final String ACTION_LOGIN = "login";
-    public static final String ACTION_TRY_SILENT_LOGIN = "trySilentLogin";
     public static final String ACTION_LOGOUT = "logout";
-
-    private final static String FIELD_ACCESS_TOKEN      = "accessToken";
-    private final static String FIELD_TOKEN_EXPIRES     = "expires";
-    private final static String FIELD_TOKEN_EXPIRES_IN  = "expires_in";
-    private final static String VERIFY_TOKEN_URL        = "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=";
 
     //String options/config object names passed in to login and trySilentLogin
     public static final String ARGUMENT_WEB_CLIENT_ID = "webClientId";
     public static final String ARGUMENT_SCOPES = "scopes";
-    public static final String ARGUMENT_OFFLINE_KEY = "offline";
     public static final String ARGUMENT_HOSTED_DOMAIN = "hostedDomain";
 
     public static final String TAG = "GooglePlugin";
     public static final int RC_GOOGLEPLUS = 1552; // Request Code to identify our plugin's activities
-    public static final int KAssumeStaleTokenSec = 60;
 
     // Wraps our service connection to Google Play services and provides access to the users sign in state and Google APIs
     private GoogleApiClient mGoogleApiClient;
@@ -77,11 +48,7 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
     public boolean execute(String action, CordovaArgs args, CallbackContext callbackContext) throws JSONException {
         this.savedCallbackContext = callbackContext;
 
-        if (ACTION_IS_AVAILABLE.equals(action)) {
-            final boolean avail = true;
-            savedCallbackContext.success("" + avail);
-
-        } else if (ACTION_LOGIN.equals(action)) {
+        if (ACTION_LOGIN.equals(action)) {
             //pass args into api client build
             buildGoogleApiClient(args.optJSONObject(0));
 
@@ -89,13 +56,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
             Log.i(TAG, "Trying to Log in!");
             cordova.setActivityResultCallback(this); //sets this class instance to be an activity result listener
             signIn();
-
-        } else if (ACTION_TRY_SILENT_LOGIN.equals(action)) {
-            //pass args into api client build
-            buildGoogleApiClient(args.optJSONObject(0));
-
-            Log.i(TAG, "Trying to do silent login!");
-            trySilentLogin();
 
         } else if (ACTION_LOGOUT.equals(action)) {
             Log.i(TAG, "Trying to logout!");
@@ -114,9 +74,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
      * @param clientOptions - the options object passed in the login function
      */
     private synchronized void buildGoogleApiClient(JSONObject clientOptions) throws JSONException {
-        if (clientOptions == null) {
-            return;
-        }
 
         //If options have been passed in, they could be different, so force a rebuild of the client
         // disconnect old client iff it exists
@@ -133,25 +90,14 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
         // b/c of what was said under the "addScope" method here:
         // https://developers.google.com/android/reference/com/google/android/gms/common/api/GoogleApiClient.Builder.html#public-methods
         String scopes = clientOptions.optString(ARGUMENT_SCOPES, null);
-
-        if (scopes != null && !scopes.isEmpty()) {
-            // We have a string of scopes passed in. Split by space and request
-            for (String scope : scopes.split(" ")) {
-                gso.requestScopes(new Scope(scope));
-            }
+        for (String scope : scopes.split(" ")) {
+            gso.requestScopes(new Scope(scope));
         }
 
         // Try to get web client id
         String webClientId = clientOptions.optString(ARGUMENT_WEB_CLIENT_ID, null);
 
-        // if webClientId included, we'll request an idToken
-        if (webClientId != null && !webClientId.isEmpty()) {
-
-            // if webClientId is included AND offline is true, we'll request the serverAuthCode
-            if (clientOptions.optBoolean(ARGUMENT_OFFLINE_KEY, false)) {
-                gso.requestServerAuthCode(webClientId, true);
-            }
-        }
+        gso.requestServerAuthCode(webClientId, true);
 
         // Try to get hosted domain
         String hostedDomain = clientOptions.optString(ARGUMENT_HOSTED_DOMAIN, null);
@@ -182,17 +128,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
     private void signIn() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(this.mGoogleApiClient);
         cordova.getActivity().startActivityForResult(signInIntent, RC_GOOGLEPLUS);
-    }
-
-    /**
-     * Tries to log the user in silently using existing sign in result information
-     */
-    private void trySilentLogin() {
-        ConnectionResult apiConnect =  mGoogleApiClient.blockingConnect();
-
-        if (apiConnect.isSuccess()) {
-            handleSignInResult(Auth.GoogleSignInApi.silentSignIn(this.mGoogleApiClient).await());
-        }
     }
 
     /**
@@ -311,64 +246,6 @@ public class GooglePlus extends CordovaPlugin implements GoogleApiClient.OnConne
                 }
             }.execute();
         }
-    }
-
-    private JSONObject getAuthToken(Activity activity, Account account, boolean retry) throws Exception {
-        AccountManager manager = AccountManager.get(activity);
-        AccountManagerFuture<Bundle> future = manager.getAuthToken(account, "oauth2:profile email", null, activity, null, null);
-        Bundle bundle = future.getResult();
-        String authToken = bundle.getString(AccountManager.KEY_AUTHTOKEN);
-        try {
-            return verifyToken(authToken);
-        } catch (IOException e) {
-            if (retry) {
-                manager.invalidateAuthToken("com.google", authToken);
-                return getAuthToken(activity, account, false);
-            } else {
-                throw e;
-            }
-        }
-    }
-
-    private JSONObject verifyToken(String authToken) throws IOException, JSONException {
-        URL url = new URL(VERIFY_TOKEN_URL+authToken);
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-        urlConnection.setInstanceFollowRedirects(true);
-        String stringResponse = fromStream(
-            new BufferedInputStream(urlConnection.getInputStream())
-        );
-        /* expecting:
-        {
-            "issued_to": "608941808256-43vtfndets79kf5hac8ieujto8837660.apps.googleusercontent.com",
-            "audience": "608941808256-43vtfndets79kf5hac8ieujto8837660.apps.googleusercontent.com",
-            "user_id": "107046534809469736555",
-            "scope": "https://www.googleapis.com/auth/userinfo.profile",
-            "expires_in": 3595,
-            "access_type": "offline"
-        }*/
-
-        Log.d("AuthenticatedBackend", "token: " + authToken + ", verification: " + stringResponse);
-        JSONObject jsonResponse = new JSONObject(
-            stringResponse
-        );
-        int expires_in = jsonResponse.getInt(FIELD_TOKEN_EXPIRES_IN);
-        if (expires_in < KAssumeStaleTokenSec) {
-            throw new IOException("Auth token soon expiring.");
-        }
-        jsonResponse.put(FIELD_ACCESS_TOKEN, authToken);
-        jsonResponse.put(FIELD_TOKEN_EXPIRES, expires_in + (System.currentTimeMillis()/1000));
-        return jsonResponse;
-    }
-
-    public static String fromStream(InputStream is) throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-        String line = null;
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
-        }
-        reader.close();
-        return sb.toString();
     }
 }
 
